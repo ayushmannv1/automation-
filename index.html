@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Jam Bot — WebADB + Gemini AI</title>
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- HEADER -->
+    <header class="app-header">
+      <h1>🚗 Car Jam Bot</h1>
+      <p class="subtitle">WebADB + Gemini AI Vision Automation</p>
+    </header>
+
+    <main class="dashboard">
+      <!-- LEFT PANEL: Connection & Config -->
+      <section class="panel panel-config">
+        <h2>⚡ Connection & Setup</h2>
+        
+        <!-- WebUSB Connection -->
+        <div class="config-group">
+          <button id="btn-connect" class="btn btn-primary btn-lg">
+            <span class="icon">🔌</span> Connect Phone (WebUSB)
+          </button>
+          <div id="connection-status" class="status-badge status-disconnected">
+            Disconnected
+          </div>
+          <div id="device-info" class="device-info hidden"></div>
+        </div>
+
+        <!-- Gemini API Key -->
+        <div class="config-group">
+          <label for="api-key">🔑 Gemini API Key</label>
+          <div class="input-row">
+            <input type="password" id="api-key" placeholder="Paste your free Gemini API key" autocomplete="off">
+            <button id="btn-toggle-key" class="btn btn-sm" title="Show/Hide key">👁️</button>
+          </div>
+          <small class="hint">Free tier: <a href="https://aistudio.google.com/app/apikey" target="_blank">Get key from Google AI Studio</a></small>
+        </div>
+
+        <!-- Game State -->
+        <div class="config-group">
+          <label>📊 Game State</label>
+          <div class="input-grid">
+            <div>
+              <label for="current-chapter" class="label-sm">Chapter</label>
+              <input type="number" id="current-chapter" value="1" min="1">
+            </div>
+            <div>
+              <label for="current-level" class="label-sm">Level</label>
+              <input type="number" id="current-level" value="1" min="1">
+            </div>
+            <div>
+              <label for="current-lives" class="label-sm">Lives</label>
+              <input type="number" id="current-lives" value="3" min="0" max="5">
+            </div>
+          </div>
+          <div id="level-info" class="level-info">Chapter 1: Level 1/15</div>
+        </div>
+
+        <!-- Play Mode Selection -->
+        <div class="config-group">
+          <label>🎮 Play Mode</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="play-mode" value="nonstop" checked>
+              <span class="radio-label">
+                <strong>Non-Stop Auto Mode</strong>
+                <small>Plays continuously until lives = 0 or Emergency Stop</small>
+              </span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="play-mode" value="chapter-limit">
+              <span class="radio-label">
+                <strong>Custom Chapter Limit</strong>
+                <small>Pauses after N chapters completed</small>
+              </span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="play-mode" value="safe">
+              <span class="radio-label">
+                <strong>Safe Permission Mode</strong>
+                <small>Asks permission every 5 levels & after each chapter</small>
+              </span>
+            </label>
+          </div>
+          <div id="chapter-limit-input" class="sub-input hidden">
+            <label for="chapter-target" class="label-sm">Chapters to play:</label>
+            <input type="number" id="chapter-target" value="3" min="1">
+          </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="config-group controls">
+          <button id="btn-start" class="btn btn-success btn-lg" disabled>
+            ▶️ Start Bot
+          </button>
+          <div class="btn-row">
+            <button id="btn-pause" class="btn btn-warning" disabled>
+              ⏸️ Pause
+            </button>
+            <button id="btn-stop" class="btn btn-danger" disabled>
+              🛑 Emergency Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- Permission Dialog (shown when paused by mode) -->
+        <div id="permission-dialog" class="permission-dialog hidden">
+          <div class="permission-content">
+            <h3>⏸️ Bot Paused</h3>
+            <p id="permission-reason"></p>
+            <button id="btn-continue" class="btn btn-success btn-lg">✅ Continue Playing</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTER PANEL: Live Preview -->
+      <section class="panel panel-preview">
+        <h2>📱 Live Preview</h2>
+        <div class="preview-container">
+          <div id="screenshot-wrapper" class="screenshot-wrapper">
+            <img id="screenshot" alt="Phone screenshot will appear here" class="screenshot-img">
+            <canvas id="tap-overlay" class="tap-overlay"></canvas>
+            <div id="no-screenshot" class="no-screenshot">
+              <span>📱</span>
+              <p>Connect your phone and start the bot to see live screenshots</p>
+            </div>
+          </div>
+        </div>
+        <div class="preview-stats">
+          <span id="stat-fps" class="stat">📸 --</span>
+          <span id="stat-moves" class="stat">🎯 Moves: 0</span>
+          <span id="stat-elapsed" class="stat">⏱️ 00:00:00</span>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: AI Logs -->
+      <section class="panel panel-logs">
+        <h2>🧠 AI Reasoning Log</h2>
+        <div class="log-controls">
+          <button id="btn-clear-log" class="btn btn-sm">🗑️ Clear</button>
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-autoscroll" checked>
+            Auto-scroll
+          </label>
+        </div>
+        <div id="log-container" class="log-container">
+          <div class="log-entry log-info">
+            <span class="log-time">--:--:--</span>
+            <span class="log-msg">Welcome! Connect your phone to start.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <p>Car Jam Bot v1.0 — 100% Client-Side • No Install Required • <a href="https://github.com" target="_blank">GitHub</a></p>
+    </footer>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
